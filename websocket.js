@@ -54,8 +54,8 @@ angular.module('pippi.websocket', [])
     };
 
     var confirm_connect = function() {
-      if(!is_onnected() && dataMap.wsHost) {
-        var websocket = new WebSocket(dataMap.wsHost);
+      if(!is_onnected() && dataMap.wsServer) {
+        var websocket = new WebSocket(dataMap.wsServer);
         websocket.onopen = function(evt) {
           while(msgQueue.length > 0) {
             websocket.send(msgQueue.pop())
@@ -87,11 +87,11 @@ angular.module('pippi.websocket', [])
       connect : function() {
         confirm_connect();
       },
-      reconnect : function(wsHost) {
+      reconnect : function(wsServer) {
         if (dataMap.websocket) {
           dataMap.websocket.close();
         };
-        connect(wsHost);
+        connect(wsServer);
       },
       close : function() {
         if (dataMap.websocket) {
@@ -138,7 +138,7 @@ angular.module('pippi.websocket', [])
     };
 
     setWebsocketServer: function(path) {
-      dataMap['wsHost'] = path;
+      dataMap['wsServer'] = path;
     };
 
     $get: function() {
