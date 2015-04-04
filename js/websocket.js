@@ -1,14 +1,14 @@
 angular.module('pippi.websocket', [])
 
-.factory('ws', function() {
-    var dataMap = {wsHost: 'ws://localhost:8080/ws'};
+.provider('ws', function() {
+    var dataMap = {};
     var msgQueue = [];
     var callQueue = [];
     var callSeq = 0;
 
     var fire = function(eventType, event) {
       // console.log(dataMap);
-      console.log(eventType + ":" + event.data);
+      // console.log(eventType + ":" + event.data);
       if (dataMap[eventType]) {
         for (var i = 0; i < dataMap[eventType].length; i++) {
           dataMap[eventType][i](event);
@@ -17,8 +17,8 @@ angular.module('pippi.websocket', [])
     };
 
     var call_func = function(Seq, data) {
-      console.log("seq: " + Seq, data);
-      console.log(callQueue);
+      // console.log("seq: " + Seq, data);
+      // console.log(callQueue);
 
       TempQueue = [];
       for(var i=0; i < callQueue.length; i++) {
@@ -32,7 +32,7 @@ angular.module('pippi.websocket', [])
           TempQueue.push(callQueue[i]);
         }
       }
-      console.log(callQueue);
+      // console.log(callQueue);
     };
 
     var add_to = function(eventType, handler) {
@@ -67,7 +67,7 @@ angular.module('pippi.websocket', [])
         websocket.onmessage = function(evt) {
           var Res = JSON.parse(evt.data);
           if(Res.length == 3 && Res[0] == 'call_resp')  {
-            console.log(Res);
+            // console.log(Res);
             call_func(Res[1], Res[2]);
           }
           else {
@@ -136,5 +136,12 @@ angular.module('pippi.websocket', [])
         dataMap = {};
       }
     };
-    return Methods;
+
+    setWebsocketServer: function(path) {
+      dataMap['wsHost'] = path;
+    };
+
+    $get: function() {
+      return Methods;
+    }
 });
