@@ -1,0 +1,23 @@
+{
+  "name": "angular-pippi",
+  "version": "0.1.0",
+  "authors": [
+    "homeway <homeway.xue@gmail.com>"
+  ],
+  "description": "an angular websocket service to pippi framework with erlang",
+  "main": "js/pippi/websocket.js",
+  "keywords": [
+    "pippi",
+    "websocket",
+    "angular",
+    "erlang"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
