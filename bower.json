@@ -5,7 +5,7 @@
     "homeway <homeway.xue@gmail.com>"
   ],
   "description": "an angular websocket service to pippi framework with erlang",
-  "main": "./websocket.js",
+  "main": "./pippi.js",
   "keywords": [
     "pippi",
     "websocket",

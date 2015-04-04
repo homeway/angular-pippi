@@ -1,6 +1,6 @@
-angular.module('pippi.websocket', [])
+angular.module('pippi', [])
 
-.provider('ws', {
+.provider('$websocket', {
     websocket: null,
     wsServer: null,
     eventMap: {},
@@ -145,5 +145,16 @@ angular.module('pippi.websocket', [])
         }
       };
       return Methods;
+    }
+})
+
+.factory('$auth', function($websocket) {
+    return {
+      login: function(User, Pass, Func) {
+        $websocket.call(['login', [User, Pass]], Func);
+      },
+      logout: function(Func) {
+        $websocket.call(['logout'], Func);
+      }
     }
 });
