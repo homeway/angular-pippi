@@ -59,6 +59,8 @@ angular.module('pippi', [])
       if(!self.is_onnected() && self.wsServer) {
         var ws = new WebSocket(self.wsServer);
         ws.onopen = function(evt) {
+          console.log("resend msqQueue: ");
+          console.log(self.msqQueue);
           while(self.msgQueue.length > 0) {
             ws.send(self.msgQueue.pop())
           };
@@ -170,6 +172,7 @@ angular.module('pippi', [])
     var loginUser = undefined;
 
     return {
+      user: function() { return loginUser; },
       login: function(User, Pass) {
         var deferred = $q.defer();
         $websocket.call(['login', [User, Pass]])
@@ -186,9 +189,9 @@ angular.module('pippi', [])
           });
         return deferred.promise;
       },
-      logout: function(Func) {
+      logout: function() {
         var deferred = $q.defer();
-        $websocket.call(['login'])
+        $websocket.call(['logout'])
         .then(
           function(Data) {
             loginUser = undefined;
