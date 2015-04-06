@@ -9,8 +9,8 @@ angular.module('pippi', [])
     callSeq: 0,
 
     fire: function(eventType, event) {
-      console.log(this.eventMap);
-      console.log(eventType + ":" + event.data);
+      // console.log(this.eventMap);
+      // console.log(eventType + ":" + event.data);
       if (this.eventMap[eventType]) {
         for (var i = 0; i < this.eventMap[eventType].length; i++) {
           this.eventMap[eventType][i](event);
@@ -19,8 +19,8 @@ angular.module('pippi', [])
     },
 
     call_func: function(Seq, data) {
-      console.log("seq: " + Seq, data);
-      console.log(this.callQueue);
+      // console.log("seq: " + Seq, data);
+      // console.log(this.callQueue);
 
       TempQueue = [];
       for(var i=0; i < this.callQueue.length; i++) {
@@ -34,7 +34,7 @@ angular.module('pippi', [])
           TempQueue.push(this.callQueue[i]);
         }
       }
-      console.log(this.callQueue);
+      // console.log(this.callQueue);
     },
 
     add_to: function(eventType, handler) {
@@ -43,7 +43,7 @@ angular.module('pippi', [])
         this.eventMap[eventType] = [];
       };
       this.eventMap[eventType].push(handler);
-      console.log(eventMap);
+      // console.log(eventMap);
     },
 
     is_onnected: function() {
@@ -69,7 +69,7 @@ angular.module('pippi', [])
         ws.onmessage = function(evt) {
           var Res = JSON.parse(evt.data);
           if(Res.length == 3 && Res[0] == 'call_resp')  {
-            console.log(Res);
+            // console.log(Res);
             self.call_func(Res[1], Res[2]);
           }
           else {
@@ -89,7 +89,7 @@ angular.module('pippi', [])
       this.wsServer = path;
     },
 
-    $get: function() {
+    $get: function($q) {
       var self = this;
       var Methods = {
         connect : function() {
@@ -112,7 +112,7 @@ angular.module('pippi', [])
         onError   : function(handler) { this.add_to("onError", handler) },
         onMessage : function(Cmd, handler) { this.add_to("onMessage."+Cmd, handler) },
 
-        send : function(Msg) {
+        cast : function(Msg) {
           if(self.is_onnected()) {
             self.websocket.send(Msg);
           }
@@ -122,9 +122,25 @@ angular.module('pippi', [])
           self.confirm_connect(self);
         },
 
-        call : function(Cmd, Func) {
+        // return a promise object
+        // the backend should return any json when success
+        // but must return an array and first name is 'error' when failed
+        call : function(Cmd) {
+          var deferred = $q.defer();
+
           self.callSeq++,
-          self.callQueue.push({'seq': self.callSeq, 'func': Func});
+          self.callQueue.push({
+            'seq': self.callSeq,
+            'func': function(Resp) {
+              if(Resp[0] != undefined && Resp[1] === 'error') {
+                // console.log("promise reject: " + Resp);
+                deferred.reject(Resp.slice(1, Resp.length));
+              }
+              else {
+                // console.log("promise resolve: " + Resp);
+                deferred.resolve(Resp);
+              }
+          }});
           Command = JSON.stringify(['call', self.callSeq, Cmd]);
           if(self.is_onnected()) {
             self.websocket.send(Command);
@@ -133,9 +149,11 @@ angular.module('pippi', [])
             self.msgQueue.push(Command);
           }
           self.confirm_connect(self);
+
+          return deferred.promise;
         },
 
-        isConnect : function() { self.is_onnected() },
+        isConnect : function() { return self.is_onnected() },
 
         clean : function() {
           if (self.websocket) {
@@ -148,13 +166,48 @@ angular.module('pippi', [])
     }
 })
 
-.factory('$auth', function($websocket) {
+.factory('$auth', function($websocket, $q) {
+    var loginUser = undefined;
+
     return {
-      login: function(User, Pass, Func) {
-        $websocket.call(['login', [User, Pass]], Func);
+      login: function(User, Pass) {
+        var deferred = $q.defer();
+        $websocket.call(['login', [User, Pass]])
+        .then(
+          function(Data) {
+            // console.log(User + " login success");
+            loginUser = User;
+            deferred.resolve(Data);
+          },
+          function(Reason) {
+            // console.log(User + " login failed: " + Reason);
+            loginUser = undefined;
+            deferred.reject(Reason);
+          });
+        return deferred.promise;
       },
       logout: function(Func) {
-        $websocket.call(['logout'], Func);
+        var deferred = $q.defer();
+        $websocket.call(['login'])
+        .then(
+          function(Data) {
+            loginUser = undefined;
+            deferred.resolve(Data)
+          },
+          function(Reason) {
+            deferred.reject(Reason)
+          });
+        return deferred.promise;
+      },
+      isOnline: function() {
+        if($websocket.isConnect() && loginUser != undefined) {
+          // console.log("onine | websocket: " + $websocket.isConnect() + ", loginUser: " + loginUser);
+          return true;
+        }
+        else {
+          // console.log("offline | websocket: " + $websocket.isConnect() + ", loginUser: " + loginUser);
+          return false;
+        }
       }
     }
 });
