@@ -19,22 +19,25 @@ angular.module('pippi', [])
     },
 
     call_func: function(Seq, data) {
-      // console.log("seq: " + Seq, data);
-      // console.log(this.callQueue);
+      console.log("call_func: seq = " + Seq + "; data = ");
+      console.log(data);
+      console.log("callQueue before call :")
+      console.log(this.callQueue);
 
       TempQueue = [];
-      for(var i=0; i < this.callQueue.length; i++) {
+      while(this.callQueue.length > 0) {
         Item = this.callQueue.pop();
-        if(Item.seq == Seq){
+        if(Item.seq === Seq){
           Item.func(data);
-          this.callQueue.concat(TempQueue);
           break;
         }
         else {
-          TempQueue.push(this.callQueue[i]);
+          TempQueue.push(Item);
         }
       }
-      // console.log(this.callQueue);
+      this.callQueue = TempQueue;
+      console.log("callQueue after call :")
+      console.log(this.callQueue);
     },
 
     add_to: function(eventType, handler) {
@@ -70,8 +73,9 @@ angular.module('pippi', [])
         ws.onerror   = function(evt) { self.fire("onError", evt) };
         ws.onmessage = function(evt) {
           var Res = JSON.parse(evt.data);
-          if(Res.length == 3 && Res[0] == 'call_resp')  {
-            // console.log(Res);
+          console.log("receive message: ");
+          console.log(Res);
+          if(Res.length === 3 && Res[0] == 'call_resp')  {
             self.call_func(Res[1], Res[2]);
           }
           else {
@@ -129,17 +133,18 @@ angular.module('pippi', [])
         // but must return an array and first name is 'error' when failed
         call : function(Cmd) {
           var deferred = $q.defer();
+          console.log("call promise: " + Cmd);
 
           self.callSeq++,
           self.callQueue.push({
             'seq': self.callSeq,
             'func': function(Resp) {
               if(Resp[0] != undefined && Resp[1] === 'error') {
-                // console.log("promise reject: " + Resp);
+                console.log("promise reject: " + Resp);
                 deferred.reject(Resp.slice(1, Resp.length));
               }
               else {
-                // console.log("promise resolve: " + Resp);
+                console.log("promise resolve: " + Resp);
                 deferred.resolve(Resp);
               }
           }});
