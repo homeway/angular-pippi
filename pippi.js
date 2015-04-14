@@ -218,4 +218,64 @@ angular.module('pippi', [])
         }
       }
     }
+})
+
+.factory('dynamic_template', function() {
+  var meta = {};
+  return {
+    reg: function(Name, Options) {
+      meta[Name] = Options;
+    },
+    meta: function(Name, Field) {
+      return meta[Name][Field];
+    },
+    columns: function(Name) {
+      return meta[Name]['columns'];
+    }
+  }
+})
+
+.directive('pippiGrid', function(dynamic_template) {
+  return {
+    restrict: 'A',
+    scope: {
+      options: '=',
+    },
+    template: function(ele, attr) {
+      var A = [];
+
+      var Columns = dynamic_template.columns(attr.reg);
+
+      if(attr.class) {
+        A.push('<table class="' + attr.class + '">');
+      }
+      else {
+        A.push('<table>');
+      }
+      A.push('<thead>');
+      A.push('<th><input type="checkbox"></input></th>');
+      for(var i = 0; i < Columns.length; i ++) {
+        A.push('<th>' + Columns[i].title + '</th>');
+      }
+      A.push('</thead>');
+      A.push('<tbody><tr ng-repeat="item in options.items">');
+      A.push('<td><input type="checkbox"></input></td>');
+      for(var i = 0; i < Columns.length; i ++) {
+        if(Columns[i]['attr']) {
+          A.push('<td ' + Columns[i]['attr'] + '>');
+        }
+        else {
+          A.push('<td>');
+        }
+        A.push(Columns[i]['template'] + '</td>');
+      }
+      A.push('</tr></tbody></table>');
+
+      A.push("共 条记录, 分 页");
+
+      console.log(A.join(''));
+      return A.join('');    
+    }
+
+  }
 });
