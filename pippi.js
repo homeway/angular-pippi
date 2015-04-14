@@ -309,12 +309,17 @@ angular.module('pippi', [])
     // templateUrl: 'components/common/grid.html',
     template: function(ele, attr) {
       var A = [];
+      var Tools = {};
+      var AllTools = attr.tools? attr.tools.split(" ") : [];
+      for(var i = 0; i < AllTools.length; i ++) {
+        Tools[AllTools[i]] = true;
+      }
 
       var Columns = dynamic_template.columns(attr.reg);
 
       // <table class="xxx"></table>
-      if(attr.class) {
-        A.push('<table class="' + attr.class + '">');
+      if(attr['class']) {
+        A.push('<table class="' + attr['class'] + '">');
       }
       else {
         A.push('<table>');
@@ -322,8 +327,12 @@ angular.module('pippi', [])
 
       // <thead>...</thead>
       A.push('<thead>');
+      // example for select:
+      // <div pippi-grid select=true options="options" reg="mygrid"></div>
       // select all
-      A.push("<th class='text-center'><input ng-checked='selectAllToggle' ng-click='selectAll()' type='checkbox'></th>");
+      if(Tools.select) {
+        A.push("<th class='text-center'><input ng-checked='selectAllToggle' ng-click='selectAll()' type='checkbox'></th>");
+      }
       // <th>...</th>
       for(var i = 0; i < Columns.length; i ++) {
         A.push('<th class="text-center">' + Columns[i].title + '</th>');
@@ -333,7 +342,9 @@ angular.module('pippi', [])
       // <tody>...</tbody>
       A.push('<tbody><tr ng-repeat="item in options.items track by $index">');
       // select item
-      A.push('<td><input ng-model="selected[$index]" type="checkbox"></td>');
+      if(Tools.select) {
+        A.push('<td><input ng-model="selected[$index]" type="checkbox"></td>');
+      }
       // <td class="xxx" stye="xxx>...</td>
       for(var i = 0; i < Columns.length; i ++) {
         if(Columns[i]['attr']) {
@@ -346,14 +357,17 @@ angular.module('pippi', [])
       }
       A.push('</tr></tbody></table>');
 
+      if(Tools['info']) {
+        A.push("<div>共{{options['total']}}条记录 ");
+      }
       // pagination
-      A.push("<div>共{{options['total']}}条记录, ");
-      A.push("分{{options['pages']}}页 - ");
-      A.push("<a ng-click='prev()'>上一页</a> ");
-      A.push("{{options['current']}} ");
-      A.push("<a ng-click='next()'>下一页</a>");
-      A.push("</div>");
-
+      if(Tools.pagination) {
+        A.push("分{{options['pages']}}页 - ");
+        A.push("<a ng-click='prev()'>上一页</a> ");
+        A.push("{{options['current']}} ");
+        A.push("<a ng-click='next()'>下一页</a>");
+        A.push("</div>");
+      }
       console.log(A.join(''));
       return A.join('');
     }
