@@ -239,27 +239,102 @@ angular.module('pippi', [])
   return {
     restrict: 'A',
     scope: {
-      options: '=',
+      options: '='
     },
+    controller: function($scope) {
+      // selected items
+
+      // update selected and selectAllToggle
+      $scope.selectAllToggle = false;
+      $scope['selected'] = {};
+      $scope.$watch(function() {
+        return $scope.options.items;
+      }, function(newvalue, oldvalue) {
+        if (newvalue !== oldvalue) {
+          $scope.selectAllToggle = false;
+          $scope['selected'] = {};
+        }
+      }, true);
+
+      if(!$scope.options.items) {
+        $scope.options.items = [];
+      }
+
+      $scope.options['selected'] = function() {
+        var Selected = [];
+        for(var i = 0; i < $scope.options.items.length; i ++) {
+          if($scope['selected'][i] === true) {
+            Selected.push($scope.options.items[i]);
+          }
+        }
+        return Selected;
+      }
+
+      $scope.selectAll = function() {
+        var toCheck = $scope.selectAllToggle;
+        for(var i = 0; i < $scope.options.items.length; i ++) {
+          $scope['selected'][i] = !toCheck;
+        }
+        $scope.selectAllToggle = !toCheck;
+      };
+
+      // pagination
+      if(!$scope.options['total']) {
+        $scope.options['total'] = 0;
+      }
+      if(!$scope.options['pages']) {
+        $scope.options['pages'] = 0;
+      }
+      if(!$scope.options['size']) {
+        $scope.options['size'] = 10;
+      }
+      if(!$scope.options['current']) {
+        $scope.options['current'] = 1;
+      }
+
+      $scope.prev = function() {
+        if($scope.options['current'] > 1) {
+          $scope.options['current'] -= 1;
+          $scope.options.refresh();
+        }
+      };
+      $scope.next = function() {
+        if($scope.options['current'] < $scope.options['pages']) {
+          $scope.options['current'] += 1;
+          $scope.options.refresh();
+        }
+      };
+
+    },
+    // templateUrl: 'components/common/grid.html',
     template: function(ele, attr) {
       var A = [];
 
       var Columns = dynamic_template.columns(attr.reg);
 
+      // <table class="xxx"></table>
       if(attr.class) {
         A.push('<table class="' + attr.class + '">');
       }
       else {
         A.push('<table>');
       }
+
+      // <thead>...</thead>
       A.push('<thead>');
-      A.push('<th><input type="checkbox"></input></th>');
+      // select all
+      A.push("<th class='text-center'><input ng-checked='selectAllToggle' ng-click='selectAll()' type='checkbox'></th>");
+      // <th>...</th>
       for(var i = 0; i < Columns.length; i ++) {
-        A.push('<th>' + Columns[i].title + '</th>');
+        A.push('<th class="text-center">' + Columns[i].title + '</th>');
       }
       A.push('</thead>');
-      A.push('<tbody><tr ng-repeat="item in options.items">');
-      A.push('<td><input type="checkbox"></input></td>');
+
+      // <tody>...</tbody>
+      A.push('<tbody><tr ng-repeat="item in options.items track by $index">');
+      // select item
+      A.push('<td><input ng-model="selected[$index]" type="checkbox"></td>');
+      // <td class="xxx" stye="xxx>...</td>
       for(var i = 0; i < Columns.length; i ++) {
         if(Columns[i]['attr']) {
           A.push('<td ' + Columns[i]['attr'] + '>');
@@ -271,10 +346,16 @@ angular.module('pippi', [])
       }
       A.push('</tr></tbody></table>');
 
-      A.push("共 条记录, 分 页");
+      // pagination
+      A.push("<div>共{{options['total']}}条记录, ");
+      A.push("分{{options['pages']}}页 - ");
+      A.push("<a ng-click='prev()'>上一页</a> ");
+      A.push("{{options['current']}} ");
+      A.push("<a ng-click='next()'>下一页</a>");
+      A.push("</div>");
 
       console.log(A.join(''));
-      return A.join('');    
+      return A.join('');
     }
 
   }
